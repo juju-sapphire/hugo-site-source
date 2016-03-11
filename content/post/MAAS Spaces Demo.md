@@ -1,5 +1,5 @@
 ---
-draft: true,
+draft: false,
 title: "MAAS Spaces Demo"
 date: "2016-01-27"
 ---
@@ -58,7 +58,7 @@ relations:
   - mysql:db
 {{< /highlight >}}
 
-Setting up VLANs, subnets and spaces in MAAS isn't difficult, but it is time consuming to go through all the steps yourself so we have put together a [script to do it for you](https://github.com/dooferlad/jujuWand/blob/master/maas-spaces.py). It starts by reading the charm bundle you give it, then:
+Setting up VLANs, subnets and spaces in MAAS isn't difficult, but it is time consuming to go through all the steps yourself so we have put together a [script to do it for you](https://github.com/juju-sapphire/utils/blob/master/maas-spaces.py). It starts by reading the charm bundle you give it, then:
 
  1. For each space it finds in the bundle it will:
    1. Create a VLAN in MAAS with a /24 subnet.
@@ -70,7 +70,9 @@ Setting up VLANs, subnets and spaces in MAAS isn't difficult, but it is time con
  1. Check that each endpoint is where it should be.
 
 The only prerequisite for the script is that the fabric that you will be creating VLANs on is called "managed":
-  1. `maas maas fabrics read`
+```
+maas maas fabrics read
+```
 {{< highlight json >}}
 [
     {
@@ -107,17 +109,25 @@ The only prerequisite for the script is that the fabric that you will be creatin
     }
   ]
 {{< /highlight >}}
-In my case I will be using the fabric that manages the subnet 192.168.1.0/24: `maas maas fabric update 1 name=managed`
-
-... run the script ... the final output is:
-
+In my case I will be using the fabric that manages the subnet 192.168.1.0/24:
 ```
+maas maas fabric update 1 name=managed
+```
+
+To run the script clone our [utils repository](https://github.com/juju-sapphire/utils), then run:
+```
+./maas-spaces.py
+```
+This will run for a while with the final output being (if all goes to plan):
+```
+mediawiki/0 cache 192.168.10.102 in internal
 mediawiki/0 website 192.168.10.102 in internal
 mediawiki/0 db 192.168.12.102 in db
-haproxy/0 peer 192.168.10.101 in internal
-haproxy/0 reverseproxy 192.168.10.101 in internal
-mysql/0 cluster 192.168.10.103 in internal
-mysql/0 db 192.168.12.103 in db
+haproxy/0 website 192.168.11.100 in public
+haproxy/0 peer 192.168.10.100 in internal
+haproxy/0 reverseproxy 192.168.10.100 in internal
+mysql/0 db 192.168.12.101 in db
+mysql/0 cluster 192.168.10.101 in internal
 ```
 
-You can now access your mediawiki instance on the public address of the haproxy unit!
+You can now access your mediawiki instance on the public address of the haproxy unit, which is shown in the above output to be the only address in the public space. Everything else is on different VLANs.
